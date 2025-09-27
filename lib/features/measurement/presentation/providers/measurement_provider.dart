@@ -1,33 +1,67 @@
 import 'dart:io';
-import 'package:fashionpro_app/features/measurement/data/model/measurement_model.dart';
-import 'package:fashionpro_app/features/measurement/data/remote_data_source/measurement_service.dart';
+import 'package:dio/dio.dart';
+import 'package:fashionpro_app/core/network/dio_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
-final measurementServiceProvider = Provider((ref) => MeasurementService());
 
-final measurementResultProvider =
-    StateNotifierProvider<MeasurementNotifier, AsyncValue<MeasurementResult?>>(
-        (ref) {
-  final service = ref.read(measurementServiceProvider);
-  return MeasurementNotifier(service);
-});
+class MeasurementState {
+  final bool isLoading;
+  final Map<String, dynamic>? result;
+  final String? error;
 
-class MeasurementNotifier extends StateNotifier<AsyncValue<MeasurementResult?>> {
-  final MeasurementService service;
+  const MeasurementState({
+    this.isLoading = false,
+    this.result,
+    this.error,
+  });
 
-  MeasurementNotifier(this.service) : super(const AsyncValue.data(null));
+  MeasurementState copyWith({
+    bool? isLoading,
+    Map<String, dynamic>? result,
+    String? error,
+  }) {
+    return MeasurementState(
+      isLoading: isLoading ?? this.isLoading,
+      result: result ?? this.result,
+      error: error ?? this.error,
+    );
+  }
+}
 
-  Future<void> capture(File front, File side) async {
-    state = const AsyncValue.loading();
+class MeasurementNotifier extends StateNotifier<MeasurementState> {
+  MeasurementNotifier(this._dio) : super(const MeasurementState());
+
+  final Dio _dio;
+
+  Future<void> uploadMeasurement(
+    File front,
+    File side,
+    double heightCm,
+  ) async {
     try {
-      final result = await service.uploadImages(
-        frontImage: front,
-        sideImage: side,
+      state = state.copyWith(isLoading: true, error: null, result: null);
+
+      final formData = FormData.fromMap({
+        "front_photo": await MultipartFile.fromFile(front.path),
+        "side_photo": await MultipartFile.fromFile(side.path),
+        "height_cm": heightCm,
+      });
+
+      final response = await _dio.post("/measurements", data: formData);
+
+      state = state.copyWith(isLoading: false, result: response.data);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error:"Upload failed: ${e.toString()}",
       );
-      state = AsyncValue.data(result);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
     }
   }
 }
+
+final measurementProvider =
+    StateNotifierProvider<MeasurementNotifier, MeasurementState>((ref) {
+  final dio = ref.read(dioProvider);
+  return MeasurementNotifier(dio);
+});
+final dioProvider = Provider((ref) => DioClient().dio);

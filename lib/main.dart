@@ -1,5 +1,6 @@
 import 'package:fashionpro_app/core/app_theme/app_theme.dart';
 import 'package:fashionpro_app/features/measurement/data/model/measurement_model.dart';
+import 'package:fashionpro_app/features/measurement/presentation/screens/measurement_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -22,6 +23,7 @@ class FashionProApp extends StatelessWidget {
       title: 'FashionPro',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      home: const MeasurementScreen(),
     );
   }
 }
