@@ -17,8 +17,8 @@ class MeasurementScreen extends ConsumerStatefulWidget {
 class _MeasurementScreenState extends ConsumerState<MeasurementScreen> {
   File? frontPhoto;
   File? sidePhoto;
-  final _refCmController = TextEditingController();
-  final _refPxController = TextEditingController();
+  final _refHeightController = TextEditingController();
+  final _refKgController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   Color get primaryColor => const Color(0xFF1D3557);
@@ -34,12 +34,12 @@ class _MeasurementScreenState extends ConsumerState<MeasurementScreen> {
     final prefs = await SharedPreferences.getInstance();
     final frontPath = prefs.getString("frontPhoto");
     final sidePath = prefs.getString("sidePhoto");
-    final refCm = prefs.getString("refCm");
-    final refPx = prefs.getString("refPx");
+    final refHeight = prefs.getString("height");
+    final refKg = prefs.getString("kg");
     if (frontPath != null) frontPhoto = File(frontPath);
     if (sidePath != null) sidePhoto = File(sidePath);
-    if (refCm != null) _refCmController.text = refCm;
-    if (refPx != null) _refPxController.text = refPx;
+    if (refHeight != null) _refHeightController.text = refHeight;
+    if (refKg != null) _refKgController.text = refKg;
     setState(() {});
   }
 
@@ -47,8 +47,8 @@ class _MeasurementScreenState extends ConsumerState<MeasurementScreen> {
     final prefs = await SharedPreferences.getInstance();
     if (frontPhoto != null) await prefs.setString("frontPhoto", frontPhoto!.path);
     if (sidePhoto != null) await prefs.setString("sidePhoto", sidePhoto!.path);
-    await prefs.setString("refCm", _refCmController.text);
-    await prefs.setString("refPx", _refPxController.text);
+    await prefs.setString("refHeight", _refHeightController.text);
+    await prefs.setString("refKg", _refKgController.text);
   }
 
   Future<void> _pickImage(bool isFront) async {
@@ -86,12 +86,12 @@ class _MeasurementScreenState extends ConsumerState<MeasurementScreen> {
       _showSnackbar("Please capture both the front and side photos.", Colors.orange.shade700);
       return;
     }
-    final refCm = double.tryParse(_refCmController.text)!;
-    // final refPx = double.tryParse(_refPxController.text)!;
+    final refHeight = double.tryParse(_refHeightController.text)!;
+    // final refKg = double.tryParse(_refKgController.text)!;
     await ref.read(measurementProvider.notifier).uploadMeasurement(
            frontPhoto!,
          sidePhoto!,
-          refCm,
+          refHeight,
         );
     _saveData();
   }
@@ -139,13 +139,13 @@ class _MeasurementScreenState extends ConsumerState<MeasurementScreen> {
                 children: [
                   Expanded(
                     child: TextFormField(
-                      controller: _refCmController,
+                      controller: _refHeightController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: _inputDecoration("Known Width (cm)", Icons.straighten_rounded),
+                      decoration: _inputDecoration("Enter your height (cm)", Icons.straighten_rounded),
                       onChanged: (_) => _saveData(),
                       validator: (value) {
                         if (value == null || double.tryParse(value) == null || double.tryParse(value)! <= 0) {
-                          return 'Enter valid CM value.';
+                          return 'Enter a valid height.';
                         }
                         return null;
                       },
@@ -154,15 +154,15 @@ class _MeasurementScreenState extends ConsumerState<MeasurementScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: TextFormField(
-                      controller: _refPxController,
+                      controller: _refKgController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                      decoration: _inputDecoration("Pixel Width (Px)", Icons.crop_free_rounded).copyWith(
-                        hintText: "Input Pixel Width",
+                      decoration: _inputDecoration("Your weight (Kg)", Icons.crop_free_rounded).copyWith(
+                        hintText: "Input your weight",
                       ),
                       onChanged: (_) => _saveData(),
                       validator: (value) {
                         if (value == null || double.tryParse(value) == null || double.tryParse(value)! <= 0) {
-                          return 'Enter valid Px value.';
+                          return 'Enter a valid value.';
                         }
                         return null;
                       },
